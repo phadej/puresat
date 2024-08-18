@@ -4,7 +4,7 @@
 -- https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html
 module Main where
 
-import Control.Monad            (forM, forM_)
+import Control.Monad            (forM, forM_, unless)
 import Control.Monad.ST         (runST)
 import Data.Foldable            (foldl')
 import Data.Primitive           (Prim)
@@ -145,14 +145,14 @@ main = defaultMain $ testGroup "dpll-dimacs"
 
     , testGroup "pret"
         -- Encoded 2-colouring forced to be unsatisfiable - 8 instances, all unsatisfiable
-        [ -- testSAT "pret" "pret60_25"
-    --     , testSAT "pret" "pret60_40"
-    --     , testSAT "pret" "pret60_60"
-    --     , testSAT "pret" "pret60_75"
-    --     , testSAT "pret" "pret150_25"
-    --     , testSAT "pret" "pret150_40"
-    --     , testSAT "pret" "pret150_60"
-    --     , testSAT "pret" "pret150_75"
+        [ testSAT "pret" "pret60_25"
+        , testSAT "pret" "pret60_40"
+        , testSAT "pret" "pret60_60"
+        , testSAT "pret" "pret60_75"
+        -- , testSAT "pret" "pret150_25"
+        -- , testSAT "pret" "pret150_40"
+        -- , testSAT "pret" "pret150_60"
+        -- , testSAT "pret" "pret150_75"
         ]
 
     , testGroup "QG"
@@ -166,7 +166,7 @@ main = defaultMain $ testGroup "dpll-dimacs"
         [ testSAT "ssa" "ssa0432-003"
         , testSAT "ssa" "ssa2670-130"
         , testSAT "ssa" "ssa2670-141"
-        -- , testSAT "ssa" "ssa6288-047" -- BUG: big problem, error?
+        , testSAT "ssa" "ssa6288-047"
         , testSAT "ssa" "ssa7552-038"
         , testSAT "ssa" "ssa7552-158"
         , testSAT "ssa" "ssa7552-159"
@@ -182,11 +182,11 @@ testSAT dir name = testCaseSteps name $ \info -> do
     then do
         info "UNSAT"
         solution' <- solveMiniSat dimacs
-        assertBool "MiniSat thinks its unsat" (null solution')
+        assertBool "MiniSat doesnt think its unsat" (null solution')
     else do
         info "SAT"
         solution' <- solveMiniSat $ [[x] | x <- solution] ++ dimacs
-        assertBool "MiniSat validates" (not (null solution'))
+        assertBool "MiniSat doesnt validate" (not (null solution'))
 
 -------------------------------------------------------------------------------
 -- PureSAT
@@ -203,12 +203,13 @@ solvePureSat clauses = runST $ do
         writePrimArray literals (i - 1) l
 
     -- addClauses
-    forM_ clauses $ \clause -> do
+    forM_ clauses $ \clause -> unless (null clause) $ do
         clause' <- forM clause $ \i -> do
             l <- readPrimArray literals (abs i - 1)
             return $ if i < 0 then PureSAT.neg l else l
 
-        PureSAT.addClause s clause'
+        _ <- PureSAT.addClause s clause'
+        return ()
 
     -- solve
     res <- PureSAT.solve s

@@ -254,6 +254,8 @@ newLit Solver {..} = do
     writeSTRef nextLit n
     let l = MkLit l'
 
+    TRACING(traceM $ "!!! newLit " ++ show l)
+
     levels <- readSTRef zeroLevels
     levels' <- extendLevels levels n
     writeSTRef zeroLevels levels'
@@ -288,43 +290,48 @@ boostScore Solver {..} l = do
 
 addClause :: Solver s -> [Lit] -> ST s Bool
 addClause solver@Solver {..} clause = whenOk ok $ do
-        pa <- readSTRef zeroPA
-        s <- satisfied pa clause
-        case s of
-            Satisfied    -> return True
-            Conflicting  -> unsat solver
-            Unresolved !c -> do
-                incrStatsClauses statistics
+    pa <- readSTRef zeroPA
+    s <- satisfied pa clause
+    case s of
+        Satisfied    ->
+            return True
+            
+        Conflicting  -> do
+            TRACING(traceM ">>> ADD CLAUSE conflict")
+            unsat solver
 
-                clauseDB <- readSTRef clauses
+        Unresolved !c -> do
+            incrStatsClauses statistics
+
+            clauseDB <- readSTRef clauses
 #ifdef TWO_WATCHED_LITERALS
-                let MkClause2 _ l1 l2 _ = c
-                insertClauseDB l1 l2 c clauseDB
+            let MkClause2 _ l1 l2 _ = c
+            insertClauseDB l1 l2 c clauseDB
 #else
-                writeSTRef clauses (c : clauseDB)
+            writeSTRef clauses (c : clauseDB)
 #endif
 
-                return True
+            return True
 
-            Unit l -> do
-                TRACING(traceM $ "addClause unit: " ++ show l)
+        Unit l -> do
+            TRACING(traceM $ "addClause unit: " ++ show l)
 
-                clauseDB <- readSTRef clauses
-                let qhead = zeroHead
+            clauseDB <- readSTRef clauses
+            let qhead = zeroHead
 
-                levels <- readSTRef zeroLevels
-                trail  <- readSTRef zeroTrail
-                vars   <- readSTRef zeroVars
+            levels <- readSTRef zeroLevels
+            trail  <- readSTRef zeroTrail
+            vars   <- readSTRef zeroVars
 
-                -- insert new literal
-                initialEnqueue trail pa levels vars l
+            -- insert new literal
+            initialEnqueue trail pa levels vars l
 
-                -- propagate
-                res <- initialLoop clauseDB qhead trail levels pa vars
+            -- propagate
+            res <- initialLoop clauseDB qhead trail levels pa vars
 
-                if res
-                then return True
-                else unsat solver
+            if res
+            then return True
+            else unsat solver
 
 unsat :: Solver s -> ST s Bool
 unsat Solver {..} = do
@@ -908,7 +915,7 @@ initialUnitPropagate !clauseDB !qhead !trail !levels !pa !vars !l = do
 
 -- | Simplify solver
 simplify :: Solver s -> ST s Bool
-simplify _ = return True
+simplify Solver {..} = whenOk ok $ return True
 -- TODO: go through clauses:
 -- * filter out satisfied clauses
 -- * filter out the solved literals from remaining clauses
