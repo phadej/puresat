@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               puresat
-version:            1.1
+version:            0.1
 synopsis:           Pure Haskell SAT-solver
 category:           Data
 description:
@@ -299,7 +299,6 @@ library internal
     PureSAT.Base
     PureSAT.Boost
     PureSAT.Clause2
-    PureSAT.DIMACS
     PureSAT.LBool
     PureSAT.LCG
     PureSAT.Level
@@ -323,10 +322,16 @@ library internal
     , containers  >=0.6.7    && <0.8
     , primitive   ^>=0.9.0.0
 
-  -- for DIMACS
+library dimacs
+  import:          language
+  hs-source-dirs:  src-dimacs
   build-depends:
-    , bytestring  ^>=0.11.5.3
-    , parsec      ^>=3.1.16.1
+    , base
+    , bytestring        ^>=0.11.5.3 || ^>=0.12.1.0
+    , parsec            ^>=3.1.16.1
+    , puresat:internal
+
+  exposed-modules: PureSAT.DIMACS
 
 executable puresat
   import:         language
@@ -339,6 +344,7 @@ executable puresat
   build-depends:
     , base
     , optparse-applicative  ^>=0.18.1.0
+    , puresat:dimacs
     , puresat:internal
 
 test-suite puresat-test
@@ -373,6 +379,7 @@ test-suite puresat-dimacs
     , filepath
     , minisat
     , primitive
+    , puresat:dimacs
     , puresat:internal
     , tasty             ^>=1.5
     , tasty-hunit
