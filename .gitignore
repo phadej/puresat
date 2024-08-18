@@ -1,0 +1,14 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Cabal junk
+dist/
+dist-newstyle/
+.ghc.environment.*
+
+# Stack junk
+.stack-work/
+
+cabal.project.local
+*.prof
