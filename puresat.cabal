@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               puresat
-version:            0.1
+version:            0.1.0.1
 synopsis:           Pure Haskell SAT-solver
 category:           Data
 description:
@@ -16,7 +16,7 @@ author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
 copyright:          (c) 2024 Oleg Grenrus
 build-type:         Simple
-tested-with:        GHC ==9.6.6 || ==9.8.2 || ==9.10.1
+tested-with:        GHC ==9.6.6 || ==9.8.2 || ==9.10.3 || ==9.12.4 || ==9.14.1
 extra-doc-files:    CHANGELOG.md
 
 -- cabal-fmt: glob-files dimacs/**/*.cnf
@@ -318,8 +318,7 @@ library internal
     PureSAT.Vec
 
   build-depends:
-    , base        >=4.18.2.1 && <4.21
-    , containers  >=0.6.7    && <0.8
+    , base        >=4.18.2.1 && <4.23
     , primitive   ^>=0.9.0.0
 
 library dimacs
@@ -343,7 +342,6 @@ executable puresat
   main-is:        puresat.hs
   build-depends:
     , base
-    , optparse-applicative  ^>=0.18.1.0
     , puresat:dimacs
     , puresat:internal
 
@@ -355,7 +353,7 @@ test-suite puresat-test
   build-depends:
     , base
     , puresat
-    , QuickCheck        ^>=2.15.0.1
+    , QuickCheck        ^>=2.15.0.1 || ^>=2.18.0.0
     , tasty             ^>=1.5
     , tasty-quickcheck  ^>=0.11
 
@@ -366,7 +364,6 @@ test-suite puresat-small
   main-is:        puresat-small.hs
   build-depends:
     , base
-    , primitive
     , puresat
 
 test-suite puresat-dimacs
